@@ -27,7 +27,7 @@ userName = 'root'
 userPass = 'invincible4tw' # INSERT your password here
 conn = pymysql.connect(host='localhost', port=int(3306), user=userName, passwd=userPass)
 cursor = conn.cursor()
-conn.select_db('Weather_Database')
+conn.select_db('WeatherDatabase')
 
 # Check that working correctly - commented out for cron job
 #print(pd.read_sql_query("""SHOW TABLES""", conn))
@@ -81,7 +81,11 @@ data_sql = (day, month, year, sunrise_pst, sunset_pst, data_to_append['humidity'
 #print(data_sql)
     
 # Execute the SQL command
-cursor.execute(insert_stmt, data_sql)
+try: 
+    cursor.execute(insert_stmt, data_sql)
+    print("OpenWeather API weather conditions put into SQL database.")
+except: 
+    print("Could not put OpenWeather API weather conditions into SQL database.")
 
 # PART 3: NWS API: Daily Weather Alerts
 # Connect to NWS API
@@ -115,8 +119,8 @@ else:
     affected_zones = str(df["affected_zones"])
     areaDesc = str(df["areaDesc"])
     description = str(df["description"])
-    effective_utc = df["effective_utc"]
-    ends_utc = df["ends_utc"]
+    effective_utc = (df["effective_utc"] - timedelta(hours=8)).strftime('%Y-%m-%d %H:%M:%S')
+    ends_utc = (df["ends_utc"] - timedelta(hours=8)).strftime('%Y-%m-%d %H:%M:%S')
     headline = str(df["headline"])
     severity = str(df["severity"])
 
@@ -133,6 +137,12 @@ insert_stmt_2 = """
         """
 
 # Execute insert statement
-cursor.execute(insert_stmt_2, data_sql_2)
+try: 
+    cursor.execute(insert_stmt_2, data_sql_2)
+    print("NWS API weather alerts put into SQL database.")
+except: 
+    print("Could not put NWS API weather alerts into SQL database.")
+    
+conn.commit()
 
 
